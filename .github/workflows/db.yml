@@ -1,0 +1,19 @@
+name: Update database
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'schema.sql'
+      - '.github/workflows/db.yml'
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run schema.sql on Supabase
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          test -n "$DATABASE_URL" || { echo "Missing secret DATABASE_URL"; exit 1; }
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 --single-transaction -f schema.sql
+          echo "DONE: database updated"
