@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ศึกชิงเมือง</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chonburi&family=Sarabun:wght@400;600;700&display=swap">
+<style>
+/* Layout: phone-first single column. Status strip on top, one tab of content, fixed tab bar at the bottom. */
+:root{
+  color-scheme:dark;
+  --night:#0e1c26;   /* page ground: city at dusk */
+  --block:#172b38;   /* panels */
+  --edge:#28475a;    /* borders */
+  --ink:#f1f5f2;     /* text */
+  --dim:#9db4bd;     /* secondary text */
+  --gold:#f2b632;    /* money, primary accent */
+  --red:#e5484d;     /* attack */
+  --green:#4cc38a;   /* ready / win */
+  --gem:#59c7e6;     /* gems */
+  --display:"Chonburi","Sarabun","Noto Sans Thai",system-ui,sans-serif;
+  --body:"Sarabun","Noto Sans Thai",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--night)}
+body{color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;padding:12px 16px calc(84px + env(safe-area-inset-bottom,0px))}
+[hidden]{display:none!important}
+.wrap{max-width:480px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+h1{font-family:var(--display);font-weight:400;font-size:1.7rem;margin:0;color:var(--gold);line-height:1.15}
+h2{font-family:var(--display);font-weight:400;font-size:1.15rem;margin:0}
+p{margin:0}
+.dim{color:var(--dim);font-size:.9rem}
+.num{font-variant-numeric:tabular-nums}
+.panel{background:var(--block);border:1px solid var(--edge);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+button{font:inherit;color:var(--ink);background:var(--edge);border:0;border-radius:10px;padding:9px 12px;font-weight:600;cursor:pointer;touch-action:manipulation}
+button:disabled{opacity:.45;cursor:default}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+button.gold{background:var(--gold);color:#2a1c00}
+button.red{background:var(--red);color:#fff}
+input,select{font:inherit;color:var(--ink);background:var(--night);border:1px solid var(--edge);border-radius:10px;padding:10px 12px;width:100%}
+label{font-size:.9rem;color:var(--dim);display:flex;flex-direction:column;gap:4px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row>.grow{flex:1;min-width:0}
+/* status strip */
+.who{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.who b{font-family:var(--display);font-weight:400;font-size:1.25rem}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.stat{background:var(--block);border:1px solid var(--edge);border-radius:10px;padding:6px 8px;min-width:0}
+.stat small{display:block;color:var(--dim);font-size:.72rem}
+.stat b{font-size:1rem;white-space:nowrap}
+.stat.g b{color:var(--gold)} .stat.m b{color:var(--gem)}
+.flags{display:flex;gap:6px;flex-wrap:wrap}
+.flag{font-size:.78rem;font-weight:600;padding:2px 9px;border-radius:999px;border:1px solid var(--edge);color:var(--dim)}
+.flag.on{border-color:var(--green);color:var(--green)}
+.flag.vip{border-color:var(--gold);color:var(--gold)}
+/* buildings */
+.bld{display:grid;grid-template-columns:92px 1fr;gap:10px;align-items:center}
+.bld svg{width:92px;height:84px;display:block}
+.bld .meta{display:flex;flex-direction:column;gap:4px;min-width:0}
+.bld .name{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.bld .name b{font-size:1.02rem}
+.lv{font-size:.8rem;color:var(--gold);font-weight:700;white-space:nowrap}
+.bar{height:8px;border-radius:4px;background:var(--night);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--green);width:0}
+/* lists */
+.list{display:flex;flex-direction:column}
+.li{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-top:1px solid var(--edge);align-items:center}
+.li:first-child{border-top:0}
+.li .l{min-width:0;display:flex;flex-direction:column}
+.li .l span{color:var(--dim);font-size:.8rem}
+.li .r{text-align:right;white-space:nowrap;font-weight:700}
+.li.me{color:var(--gold)}
+.win{color:var(--green)} .lose{color:var(--red)}
+.big{font-family:var(--display);font-size:1.5rem;line-height:1.2}
+.card{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+/* tab bar */
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--block);border-top:1px solid var(--edge);padding:8px 16px calc(8px + env(safe-area-inset-bottom,0px))}
+nav div{max-width:480px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+nav button{background:transparent;color:var(--dim);padding:10px 4px;font-size:.95rem}
+nav button[aria-selected="true"]{background:var(--gold);color:#2a1c00}
+#toast{position:fixed;left:16px;right:16px;top:calc(10px + env(safe-area-inset-top,0px));max-width:448px;margin:0 auto;background:#000;border:1px solid var(--edge);border-radius:10px;padding:10px 14px;text-align:center;font-weight:600;z-index:5}
+#toast.err{border-color:var(--red)} #toast.ok{border-color:var(--green)}
+code{background:var(--night);padding:1px 5px;border-radius:4px;font-size:.85em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ตั้งค่ายังไม่ครบ -->
+  <section id="setup" class="panel" hidden>
+    <h1>ศึกชิงเมือง</h1>
+    <p>เกมยังไม่ได้เชื่อมกับเซิร์ฟเวอร์</p>
+    <p class="dim" id="setupmsg">เปิดไฟล์ <code>index.html</code> แล้วใส่ค่า <code>SUPABASE_URL</code> กับ <code>SUPABASE_KEY</code> ที่บรรทัดบนสุดของสคริปต์</p>
+  </section>
+
+  <!-- ตั้งเมืองครั้งแรก -->
+  <section id="join" class="panel" hidden>
+    <h1>ศึกชิงเมือง</h1>
+    <p class="dim">ตั้งเมืองของคุณในจังหวัดจริง สร้าง อัปเกรด แล้วออกไปตีเมืองคนอื่นทั่วประเทศ</p>
+    <label for="jname">ชื่อเจ้าเมือง (2-16 ตัวอักษร)<input id="jname" maxlength="16" autocomplete="off"></label>
+    <label for="jprov">จังหวัดที่ตั้งเมือง<select id="jprov"></select></label>
+    <button class="gold" id="jgo" type="button">ตั้งเมือง</button>
+  </section>
+
+  <!-- เกม -->
+  <div id="game" hidden style="display:flex;flex-direction:column;gap:12px">
+    <div class="who"><b id="pname"></b><span class="dim" id="pprov"></span></div>
+    <div class="stats">
+      <div class="stat g"><small>เงิน</small><b class="num" id="sgold">0</b></div>
+      <div class="stat m"><small>เพชร</small><b class="num" id="sgems">0</b></div>
+      <div class="stat"><small>ทหาร</small><b class="num" id="stroops">0</b></div>
+      <div class="stat"><small>ถ้วย</small><b class="num" id="strophy">0</b></div>
+    </div>
+    <div class="flags">
+      <span class="flag" id="fshield">ไม่มีโล่</span>
+      <span class="flag" id="fvip">ไม่มี VIP</span>
+      <span class="flag num" id="frate"></span>
+    </div>
+
+    <section id="tab-city" class="tab" style="display:flex;flex-direction:column;gap:10px"></section>
+
+    <section id="tab-war" class="tab" hidden style="display:flex;flex-direction:column;gap:10px">
+      <div class="panel">
+        <h2>กองทัพ</h2>
+        <p class="dim">ทหาร 1 นาย ราคา 20 เงิน พลังบุกนายละประมาณ 10</p>
+        <div class="row">
+          <button id="tr5" type="button">ฝึก +5</button>
+          <button id="trmax" type="button">ฝึกจนเต็มค่าย</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>เป้าหมาย</h2>
+        <button class="gold" id="find" type="button">หาเมืองเป้าหมาย</button>
+        <div id="target" hidden style="display:flex;flex-direction:column;gap:8px">
+          <div class="who"><b id="tname"></b><span class="dim" id="tprov"></span></div>
+          <div class="list">
+            <div class="li"><div class="l">พลังป้องกัน<span id="tlv"></span></div><div class="r num" id="tdef"></div></div>
+            <div class="li"><div class="l">เงินที่ปล้นได้ถ้าชนะ</div><div class="r num" id="tloot" style="color:var(--gold)"></div></div>
+          </div>
+          <label for="send">ส่งทหารไป <span class="num" id="sendn"></span><input id="send" type="range" min="1" max="1" value="1"></label>
+          <p class="dim num" id="atkest"></p>
+          <button class="red" id="go" type="button">บุกเมือง</button>
+        </div>
+        <div id="result" hidden class="panel" style="background:var(--night)"></div>
+      </div>
+      <div class="panel">
+        <h2>ประวัติการรบ</h2>
+        <div class="list" id="log"><p class="dim">ยังไม่มีการรบ</p></div>
+      </div>
+    </section>
+
+    <section id="tab-shop" class="tab" hidden style="display:flex;flex-direction:column;gap:10px">
+      <p class="dim">ช่วงทดสอบ เพชรได้ฟรี: เข้าเกมวันละ 10 เพชร ชนะศึกครั้งละ 1 เพชร ยังไม่เปิดเติมเงินจริง</p>
+      <div class="panel card"><div><h2>การ์ดป้องกันเมือง 24 ชม.</h2><p class="dim">ไม่มีใครตีเมืองคุณได้ แต่โล่จะหายทันทีถ้าคุณออกไปตีคนอื่น</p></div><button class="gold" data-buy="shield" type="button">30 เพชร</button></div>
+      <div class="panel card"><div><h2>การ์ด VIP 7 วัน</h2><p class="dim">ช่างก่อสร้าง 2 ชุด สร้างพร้อมกันได้ 2 อาคาร และตลาดผลิตเงินเพิ่ม 20%</p></div><button class="gold" data-buy="vip" type="button">100 เพชร</button></div>
+      <div class="panel card"><div><h2>เร่งก่อสร้างให้เสร็จทันที</h2><p class="dim">คิด 1 เพชรต่อเวลาที่เหลือทุก 5 นาที</p></div><button class="gold" data-buy="finish" type="button">เร่งเลย</button></div>
+    </section>
+
+    <section id="tab-rank" class="tab" hidden style="display:flex;flex-direction:column;gap:10px">
+      <div class="panel"><h2>จังหวัดที่แข็งแกร่งที่สุด</h2><p class="dim">รวมถ้วยของทุกเมืองในจังหวัด ผู้ที่ถ้วยมากสุดคือเจ้าจังหวัด</p><div class="list" id="rprov"></div></div>
+      <div class="panel"><h2>เจ้าเมืองอันดับสูงสุด</h2><div class="list" id="rplay"></div></div>
+    </section>
+  </div>
+</div>
+
+<nav id="nav" hidden><div role="tablist">
+  <button role="tab" data-tab="city" aria-selected="true" type="button">เมือง</button>
+  <button role="tab" data-tab="war" aria-selected="false" type="button">ตีเมือง</button>
+  <button role="tab" data-tab="shop" aria-selected="false" type="button">ร้านการ์ด</button>
+  <button role="tab" data-tab="rank" aria-selected="false" type="button">อันดับ</button>
+</div></nav>
+<div id="toast" hidden role="status"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ====== ใส่ค่าจาก Supabase ตรงนี้ (Project Settings > API) ====== */
+var SUPABASE_URL = 'https://ntpkxpjtqhhegecxvhrz.supabase.co';
+var SUPABASE_KEY = 'sb_publishable_4cwvYfQMWfZXfOcfksJT_g_23zV5eCG';
+/* ================================================================ */
+
+(function(){
+var $=function(id){return document.getElementById(id)};
+var PROV=['กรุงเทพมหานคร','กระบี่','กาญจนบุรี','กาฬสินธุ์','กำแพงเพชร','ขอนแก่น','จันทบุรี','ฉะเชิงเทรา','ชลบุรี','ชัยนาท','ชัยภูมิ','ชุมพร','เชียงราย','เชียงใหม่','ตรัง','ตราด','ตาก','นครนายก','นครปฐม','นครพนม','นครราชสีมา','นครศรีธรรมราช','นครสวรรค์','นนทบุรี','นราธิวาส','น่าน','บึงกาฬ','บุรีรัมย์','ปทุมธานี','ประจวบคีรีขันธ์','ปราจีนบุรี','ปัตตานี','พระนครศรีอยุธยา','พะเยา','พังงา','พัทลุง','พิจิตร','พิษณุโลก','เพชรบุรี','เพชรบูรณ์','แพร่','ภูเก็ต','มหาสารคาม','มุกดาหาร','แม่ฮ่องสอน','ยโสธร','ยะลา','ร้อยเอ็ด','ระนอง','ระยอง','ราชบุรี','ลพบุรี','ลำปาง','ลำพูน','เลย','ศรีสะเกษ','สกลนคร','สงขลา','สตูล','สมุทรปราการ','สมุทรสงคราม','สมุทรสาคร','สระแก้ว','สระบุรี','สิงห์บุรี','สุโขทัย','สุพรรณบุรี','สุราษฎร์ธานี','สุรินทร์','หนองคาย','หนองบัวลำภู','อ่างทอง','อำนาจเจริญ','อุดรธานี','อุตรดิตถ์','อุทัยธานี','อุบลราชธานี'];
+var KIND={hall:{n:'ศาลากลาง',d:'ระดับของอาคารอื่นสูงได้ไม่เกินศาลากลาง'},market:{n:'ตลาด',d:'ผลิตเงินตลอดเวลา แม้ออกจากเกม'},bank:{n:'ธนาคาร',d:'เก็บเงินได้มากขึ้น และโดนปล้นน้อยลง'},camp:{n:'ค่ายทหาร',d:'จุทหารได้ระดับละ 20 นาย'},fort:{n:'ป้อมปราการ',d:'เพิ่มพลังป้องกันเมือง'}};
+var ORDER=['hall','market','bank','camp','fort'];
+var sb=null,ST=null,fetchedAt=0,offset=0,target=null,busy=false,tab='city';
+
+function fmt(n){return Math.floor(n).toLocaleString('th-TH')}
+function dur(s){s=Math.max(0,Math.ceil(s));if(s<60)return s+' วิ';var m=Math.floor(s/60);if(m<60)return m+' นาที '+(s%60?(s%60)+' วิ':'');var h=Math.floor(m/60);if(h<24)return h+' ชม. '+(m%60)+' นาที';return Math.floor(h/24)+' วัน '+(h%24)+' ชม.'}
+function now(){return Date.now()+offset}
+var toastT=0;
+function toast(msg,kind){var t=$('toast');t.textContent=msg;t.className=kind||'';t.hidden=false;clearTimeout(toastT);toastT=setTimeout(function(){t.hidden=true},3200)}
+
+function api(fn,args){
+  return sb.rpc(fn,args||{}).then(function(r){
+    if(r.error)throw new Error(r.error.message||'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้');return r.data});
+}
+function act(p,okmsg){
+  if(busy)return Promise.resolve();busy=true;
+  return p().then(function(d){busy=false;if(okmsg)toast(okmsg,'ok');return refresh().then(function(){return d})})
+    .catch(function(e){busy=false;toast(e.message,'err')});
+}
+
+/* ---------- อาคารแบบไอโซเมตริก ---------- */
+function box(x,y,w,h,hue,sat){
+  var d=w/2,s=sat==null?45:sat,p=function(a){return a.map(function(q){return q.join(',')}).join(' ')};
+  return '<polygon fill="hsl('+hue+','+s+'%,36%)" points="'+p([[x-w,y-h],[x,y-h+d],[x,y+d],[x-w,y]])+'"/>'+
+         '<polygon fill="hsl('+hue+','+s+'%,27%)" points="'+p([[x+w,y-h],[x,y-h+d],[x,y+d],[x+w,y]])+'"/>'+
+         '<polygon fill="hsl('+hue+','+s+'%,58%)" points="'+p([[x,y-h-d],[x+w,y-h],[x,y-h+d],[x-w,y-h]])+'"/>';
+}
+function art(kind,lv,building){
+  var s='<svg viewBox="0 0 92 84" aria-hidden="true">'+box(46,62,40,3,200,18),g=Math.min(lv,10);
+  if(kind==='hall'){var h=14+g*2.4;s+=box(46,60,28,h,42,50)+box(46,60-h,16,8+g,42,60)+'<line x1="46" y1="'+(52-h-g-8)+'" x2="46" y2="'+(52-h-g-22)+'" stroke="#f1f5f2" stroke-width="1.5"/><rect x="46" y="'+(52-h-g-22)+'" width="10" height="6" fill="hsl(356,75%,58%)"/>'}
+  else if(kind==='market'){var mh=9+g*1.2;s+=box(34,58,14,mh,14,60)+box(58,58,14,mh,48,70)+box(46,66,14,mh,170,45);if(g>3)s+=box(46,50,10,mh+g,14,60)}
+  else if(kind==='bank'){var bh=16+g*3.4;s+=box(46,60,22,bh,205,40)+box(46,60-bh,25,3,205,20);if(g>4)s+=box(46,57-bh,10,6+g,205,50)}
+  else if(kind==='camp'){s+=box(46,60,30,5,95,30);var n=Math.min(3,1+Math.floor(g/3)),xs=[[46],[34,58],[30,46,62]][n-1];xs.forEach(function(x,i){var y=58-(i%2)*4,t=13+g;s+='<polygon fill="hsl(95,35%,38%)" points="'+(x-11)+','+y+' '+x+','+(y-t)+' '+x+','+(y+5)+'"/><polygon fill="hsl(95,35%,27%)" points="'+(x+11)+','+y+' '+x+','+(y-t)+' '+x+','+(y+5)+'"/>'})}
+  else{var fh=12+g*2.6;s+=box(46,60,26,fh,28,14);[[28,51],[64,51],[46,42],[46,60]].forEach(function(c){s+=box(c[0],c[1]-fh,6,6,28,10)})}
+  if(building)s+='<rect x="6" y="6" width="30" height="5" fill="hsl(42,90%,55%)"/><rect x="6" y="11" width="3" height="60" fill="hsl(42,90%,55%)"/><line x1="33" y1="11" x2="33" y2="26" stroke="hsl(42,90%,55%)" stroke-width="1.5"/>';
+  return s+'</svg>';
+}
+
+/* ---------- วาดหน้าจอ ---------- */
+function bmap(){var m={};ST.buildings.forEach(function(b){m[b.kind]=b});return m}
+function curGold(){return Math.min(Math.max(ST.cap,ST.player.gold),ST.player.gold+(ST.player.gold>=ST.cap?0:ST.rate/3600*(Date.now()-fetchedAt)/1000))}
+function renderCity(){
+  var el=$('tab-city'),m=bmap(),hall=m.hall.level,html='';
+  ORDER.forEach(function(k){
+    var b=m[k],up=!!b.done_at,max=b.level>=10,gate=k!=='hall'&&b.level>=hall;
+    html+='<div class="panel bld" data-kind="'+k+'">'+art(k,b.level,up)+'<div class="meta">'+
+      '<div class="name"><b>'+KIND[k].n+'</b><span class="lv">ระดับ '+b.level+'</span></div>'+
+      '<span class="dim">'+KIND[k].d+'</span>'+
+      (up?'<div class="bar"><i data-bar="'+k+'"></i></div><span class="dim num" data-left="'+k+'"></span>':
+       max?'<span class="dim">ระดับสูงสุดแล้ว</span>':
+       gate?'<span class="dim">ต้องอัปเกรดศาลากลางเป็นระดับ '+(hall+1)+' ก่อน</span>':
+       '<button type="button" data-up="'+k+'">อัปเกรด · <span class="num">'+fmt(b.cost)+'</span> เงิน · '+dur(b.secs)+'</button>')+
+      '</div></div>';
+  });
+  el.innerHTML=html;
+}
+function renderTop(){
+  var p=ST.player,t=now();
+  $('pname').textContent=p.name;$('pprov').textContent='จังหวัด'+p.province;
+  $('sgems').textContent=fmt(p.gems);$('stroops').textContent=p.troops+'/'+ST.troop_cap;$('strophy').textContent=fmt(p.trophies);
+  $('frate').textContent='ตลาด +'+fmt(ST.rate)+'/ชม. · เก็บได้ '+fmt(ST.cap);
+  $('trmax').disabled=$('tr5').disabled=p.troops>=ST.troop_cap;
+  var s=$('send');s.max=Math.max(1,p.troops);if(+s.value>p.troops)s.value=Math.max(1,p.troops);sendUI();
+}
+function sendUI(){var n=+$('send').value;$('sendn').textContent=n+' นาย';$('atkest').textContent='พลังบุกประมาณ '+fmt(n*8.5)+' ถึง '+fmt(n*11.5)+' ต้องมากกว่าพลังป้องกันจึงจะชนะ';$('go').disabled=!ST||ST.player.troops<1}
+function tick(){
+  if(!ST)return;var t=now(),p=ST.player,due=false;
+  $('sgold').textContent=fmt(curGold());
+  var sh=new Date(p.shield_until)-t,vp=new Date(p.vip_until)-t,fs=$('fshield'),fv=$('fvip');
+  fs.textContent=sh>0?'โล่ป้องกัน '+dur(sh/1000):'ไม่มีโล่';fs.className='flag'+(sh>0?' on':'');
+  fv.textContent=vp>0?'VIP '+dur(vp/1000):'ไม่มี VIP';fv.className='flag'+(vp>0?' vip':'');
+  ST.buildings.forEach(function(b){
+    if(!b.done_at)return;var left=(new Date(b.done_at)-t)/1000,bar=document.querySelector('[data-bar="'+b.kind+'"]'),tx=document.querySelector('[data-left="'+b.kind+'"]');
+    if(bar)bar.style.width=Math.max(0,Math.min(100,(1-left/b.secs)*100))+'%';
+    if(tx)tx.textContent=left>0?'กำลังก่อสร้าง เหลือ '+dur(left):'เสร็จแล้ว';
+    if(left<=0)due=true;
+  });
+  if(due&&!busy&&Date.now()-fetchedAt>1500)refresh();
+}
+function refresh(){
+  return api('api_state').then(function(d){
+    if(!d.player){show('join');return}
+    ST=d;fetchedAt=Date.now();offset=new Date(d.now).getTime()-fetchedAt;
+    show('game');renderTop();renderCity();tick();
+    if(d.daily)toast('ของขวัญประจำวัน +10 เพชร','ok');
+  });
+}
+function show(which){$('setup').hidden=which!=='setup';$('join').hidden=which!=='join';$('game').hidden=which!=='game';$('nav').hidden=which!=='game'}
+function setTab(t){
+  tab=t;['city','war','shop','rank'].forEach(function(k){$('tab-'+k).hidden=k!==t});
+  document.querySelectorAll('nav button').forEach(function(b){b.setAttribute('aria-selected',b.dataset.tab===t?'true':'false')});
+  if(t==='rank')loadRank();if(t==='war')loadLog();window.scrollTo(0,0);
+}
+function li(l,sub,r,cls){var d=document.createElement('div');d.className='li'+(cls?' '+cls:'');var a=document.createElement('div');a.className='l';a.textContent=l;if(sub){var s=document.createElement('span');s.textContent=sub;a.appendChild(s)}var b=document.createElement('div');b.className='r num';b.textContent=r;d.appendChild(a);d.appendChild(b);return d}
+function loadRank(){
+  api('api_top').then(function(d){
+    var a=$('rprov'),b=$('rplay');a.textContent='';b.textContent='';
+    d.provinces.forEach(function(p,i){a.appendChild(li((i+1)+'. '+p.province,'เจ้าจังหวัด: '+p.lord+' · '+p.cities+' เมือง',fmt(p.total)+' ถ้วย'))});
+    d.players.forEach(function(p,i){b.appendChild(li((i+1)+'. '+p.name,p.province+' · ศาลากลางระดับ '+p.hall,fmt(p.trophies)+' ถ้วย',p.me?'me':''))});
+  }).catch(function(e){toast(e.message,'err')});
+}
+function loadLog(){
+  api('api_battles').then(function(rows){
+    var el=$('log');el.textContent='';
+    if(!rows.length){var p=document.createElement('p');p.className='dim';p.textContent='ยังไม่มีการรบ';el.appendChild(p);return}
+    rows.forEach(function(r){
+      var won=r.mine?r.win:!r.win,title=r.mine?'คุณบุก '+r.defender_name:r.attacker_name+' บุกเมืองคุณ';
+      var sub=(won?'ชนะ':'แพ้')+(r.loot>0?(r.mine?' · ปล้นได้ ':' · เสียเงิน ')+fmt(r.loot):'');
+      var row=li(title,sub,won?'ชนะ':'แพ้',won?'win':'lose');
+      if(!r.mine){var bt=document.createElement('button');bt.type='button';bt.textContent='แก้แค้น';bt.addEventListener('click',function(){findTarget(r.attacker)});row.replaceChild(bt,row.lastChild)}
+      el.appendChild(row);
+    });
+  }).catch(function(e){toast(e.message,'err')});
+}
+function findTarget(id){
+  $('result').hidden=true;
+  act(function(){return api('api_target',id?{p_id:id}:{})}).then(function(t){
+    if(!t)return;target=t;$('target').hidden=false;
+    $('tname').textContent=t.name;$('tprov').textContent='จังหวัด'+t.province+' · '+fmt(t.trophies)+' ถ้วย';
+    $('tlv').textContent='ศาลากลางระดับ '+t.hall+' · ป้อมระดับ '+t.fort;$('tdef').textContent=fmt(t.defense);$('tloot').textContent=fmt(t.loot);
+    $('send').value=$('send').max;sendUI();
+  });
+}
+function attack(){
+  if(!target)return;var n=+$('send').value,t=target;
+  act(function(){return api('api_attack',{p_target:t.id,p_troops:n})}).then(function(r){
+    if(!r)return;target=null;$('target').hidden=true;
+    var el=$('result');el.hidden=false;el.textContent='';
+    var h=document.createElement('div');h.className='big '+(r.win?'win':'lose');h.textContent=r.win?'ยึดเมืองสำเร็จ':'บุกไม่สำเร็จ';el.appendChild(h);
+    var p=document.createElement('p');p.className='num';p.textContent='พลังบุก '+fmt(r.atk)+' ต่อ พลังป้องกัน '+fmt(r.def)+' ของ '+r.name;el.appendChild(p);
+    var q=document.createElement('p');q.className='dim num';q.textContent=(r.win?'ปล้นได้ '+fmt(r.loot)+' เงิน · +1 เพชร · ':'')+'ถ้วย '+(r.trophies>=0?'+':'')+r.trophies+' · เสียทหาร '+r.lost+' นาย';el.appendChild(q);
+    loadLog();
+  });
+}
+
+/* ---------- เริ่มเกม ---------- */
+function boot(){
+  if(SUPABASE_URL.indexOf('PASTE')===0||SUPABASE_KEY.indexOf('PASTE')===0){show('setup');return}
+  if(!window.supabase||!window.supabase.createClient){show('setup');$('setupmsg').textContent='โหลดตัวเชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ตรวจอินเทอร์เน็ตแล้วเปิดใหม่';return}
+  sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+  var sel=$('jprov');PROV.forEach(function(p){var o=document.createElement('option');o.value=p;o.textContent=p;sel.appendChild(o)});sel.value='ชลบุรี';
+  sb.auth.getSession().then(function(r){
+    if(r.data&&r.data.session)return;
+    return sb.auth.signInAnonymously().then(function(x){if(x.error)throw new Error('เข้าสู่ระบบไม่ได้: '+x.error.message)});
+  }).then(refresh).catch(function(e){show('setup');$('setupmsg').textContent=e.message});
+
+  $('jgo').addEventListener('click',function(){act(function(){return api('api_join',{p_name:$('jname').value,p_province:$('jprov').value})},'ตั้งเมืองสำเร็จ ได้โล่ป้องกัน 12 ชม.')});
+  $('tab-city').addEventListener('click',function(e){var b=e.target.closest('[data-up]');if(b)act(function(){return api('api_upgrade',{p_kind:b.dataset.up})},'เริ่มก่อสร้างแล้ว')});
+  $('tr5').addEventListener('click',function(){act(function(){return api('api_train',{p_n:Math.min(5,ST.troop_cap-ST.player.troops)})},'ฝึกทหารแล้ว')});
+  $('trmax').addEventListener('click',function(){var n=Math.min(ST.troop_cap-ST.player.troops,Math.floor(curGold()/20));if(n<1){toast('เงินไม่พอ','err');return}act(function(){return api('api_train',{p_n:n})},'ฝึกทหาร '+n+' นาย')});
+  $('find').addEventListener('click',function(){findTarget(null)});
+  $('send').addEventListener('input',sendUI);
+  $('go').addEventListener('click',attack);
+  document.querySelectorAll('[data-buy]').forEach(function(b){b.addEventListener('click',function(){act(function(){return api('api_buy',{p_item:b.dataset.buy})},'ใช้การ์ดแล้ว')})});
+  document.querySelectorAll('nav button').forEach(function(b){b.addEventListener('click',function(){setTab(b.dataset.tab)})});
+  setInterval(tick,500);
+  setInterval(function(){if(ST&&!busy&&!document.hidden)refresh()},15000);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden&&ST&&!busy)refresh()});
+}
+boot();
+})();
+</script>
+</body>
+</html>
